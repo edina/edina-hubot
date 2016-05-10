@@ -115,7 +115,8 @@ getMetadata = (params, res, callback) ->
 
           callback metadata
       else
-        res.reply "ERROR: #{error}"
+        console.log "NON 200 Response: #{response.statusCode}"
+        res.reply "ERROR Getting Maven Metadata from #{metadataUrl}: #{error}"
         return
 
 
@@ -150,36 +151,61 @@ getDeployParams = (params, metadata) ->
   version: params.version ? metadata.latestVersion
   site: params.location ? 'beta'
 
-serialize = (obj, prefix) ->
-  str = []
-  for p, v of obj
-    k = if prefix then prefix + "[" + p + "]" else p
-    if typeof v == "object"
-      str.push(serialize(v, k))
-    else
-      str.push(encodeURIComponent(k) + "=" + encodeURIComponent(v))
-
-  str.join("&")
 
 executeJob = (url, params, res, job) ->
-  data = JSON.stringify(params)
-  # console.log "URL: #{url}"
-  # console.log "DATA: #{data}"
+  #console.log "URL: #{url}"
+  paramsString = JSON.stringify params
+  #console.log "PARAMS: #{paramsString}"
+  token = params.token
+  #console.log "TOKEN: #{token}"
+  json = params.json
+  app = null
+  for param in json.parameter
+    console.log "param: #{param.name}"
+    if param.name == 'ARTIFACT_ID'
+      console.log "app: #{param.value}"
+      app = param.value
+  
+  jsonString = JSON.stringify json
+  #console.log "JSON: #{jsonString}"
+  encodedJson = encodeURIComponent jsonString
+  #console.log "ENCODED JSON: #{encodedJson}"
 
-  serialized = serialize params
-  # console.log "SERIALIZE: #{serialized}"
+  # If job is release, need to get the releaseVersion and developmentVersion 
+  data = ''
+  if token == 'release'
+    for k, v of json
+      console.log "RELEASE PARAM: #{k}, value: #{v}"
+      if k == 'releaseVersion'
+        data += "releaseVersion=#{v}"
+      if k == 'developmentVersion'
+        data += "&developmentVersion=#{v}&"
+
+  data += "token=#{token}&json=#{encodedJson}"
+  console.log "DATA: #{data}"
+
+
+  buffer = new Buffer "msmall1:9c460057fb59d1e8c2d0ba79229ecf8c"
+  authorization = "Basic " + buffer.toString 'base64'
+
   res.http(url)
     .header('Content-Type', 'application/x-www-form-urlencoded')
+    .header('Authorization', "authorization")
     .post(data) (error, response, body) ->
       if error
         res.reply "Error: #{error}"
         return
 
       switch response.statusCode
-        when 200
+        when 201
           # console.log "Request Successful"
+          res.reply "Completed #{token} of #{app}"
+        when 302
+          # console.log "Request Successful"
+          res.reply "Completed #{token} of #{app}"
         else
-          res.reply "ERROR: #{error}"
+          console.log "ERROR Response: #{response.statusCode}"
+          res.reply "ERROR Executing Jenkins Job: #{error}"
           return
 
 getUserToken = (user) ->
@@ -285,27 +311,26 @@ module.exports = (robot) ->
           # console.log "MINOR VERSION: #{minorVersion}"
           developmentVersion = "#{majorVersion}.#{minorVersion}-SNAPSHOT"
 
+          index = params.groupId.indexOf '.'
+          groupId = params.groupId.substring index + 1, params.groupId.length
+          console.log "ROUPID: #{groupId}"
+
           options =
             token: 'release'
             releaseVersion: releaseVersion
             developmentVersion: developmentVersion
             json:
+              releaseVersion: releaseVersion
+              developmentVersion: developmentVersion
+              isDryRun: false
               parameter: [
                 {
                   name: 'GROUP_ID'
-                  value: params.groupId
+                  value: groupId
                 }
                 {
                   name: 'ARTIFACT_ID'
                   value: params.artifactId
-                }
-                {
-                  name: 'releaseVersion'
-                  value: releaseVersion
-                }
-                {
-                  name: 'developmentVersion'
-                  value: developmentVersion
                 }
               ]
 
