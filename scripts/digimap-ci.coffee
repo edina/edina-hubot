@@ -3,18 +3,9 @@
 #   This script handles the integration of Hubot and Jenkins.
 #
 # Commands:
-#   hubot: dmci deploy <app> <version> <destination> - Tell Jenkins what to deploy and where (version defaults to latest and destination to beta).
-#   hubot: dmci release <app>                        - Tell Jenkins what to run the Maven Release Plugin for <app>.
-#   hubot: dmci update <days>                        - Deploy to beta any dev apps deployed over the previous <days> (default 1 day).
-#
-# Variables:
-#   HUBOT_MVN_REPO_URL - Url to Maven Repository (including trailing slash).
-#   HUBOT_JENKINS_AUTH_TOKENS - String representation of uun/token pairs e.g.
-# {"user1":"User's Jenkins auth token","user2":"User's Jenkins auth token"}
-# You can get the auth token from $JENKINS_URL/me/configure when logged into Jenkins.
-#
-# Author:
-#   marksmall
+#   hubot: dmci deploy <app> <version> <site> - Deploy an  app (defaults: version=latest, site=beta).
+#   hubot: dmci release <app> - Tell Jenkins what to run the Maven Release Plugin for <app>.
+#   hubot: dmci update <days> - Update beta with apps deployed in last <days> (default 1 day).
 
 xml2js = require('xml2js')
 xmlParser = new xml2js.Parser()
