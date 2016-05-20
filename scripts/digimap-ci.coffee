@@ -6,7 +6,7 @@
 #   hubot: dmci deploy <app> <version> <site> - Deploy an  app (defaults: version=latest, site=beta).
 #   hubot: dmci release <app> - Tell Jenkins what to run the Maven Release Plugin for <app>.
 #   hubot: dmci update <days> - Update beta with apps deployed in last <days> (default 1 day).
-#   hubot: dmci start update <days> <cron> - Regularly deploy to beta looking over the past <days> with period specified in cron format by <cron>
+#   hubot: dmci start update <days> <cron> - Deploy to beta, apps deployed <days> ago using cron syntax
 #   hubot: dmci stop update - Stop any regular deploys to beta, if one has been set
 #   hubot: dmci show update - Display information on a regular update to beta, if one has been set
 
