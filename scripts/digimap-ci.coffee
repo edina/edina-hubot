@@ -6,10 +6,14 @@
 #   hubot: dmci deploy <app> <version> <site> - Deploy an  app (defaults: version=latest, site=beta).
 #   hubot: dmci release <app> - Tell Jenkins what to run the Maven Release Plugin for <app>.
 #   hubot: dmci update <days> - Update beta with apps deployed in last <days> (default 1 day).
+#   hubot: dmci start update <days> <cron> - Deploy to beta, apps deployed <days> ago using cron syntax
+#   hubot: dmci stop update - Stop any regular deploys to beta, if one has been set
+#   hubot: dmci show update - Display information on a regular update to beta, if one has been set
 
 xml2js = require('xml2js')
 xmlParser = new xml2js.Parser()
 moment = require('moment')
+CronJob = require('cron').CronJob
 
 mavenRepository = process.env.HUBOT_MVN_REPO_URL
 
@@ -96,7 +100,7 @@ getDevDeploys = (res, endTime, builds, index, dontDeploy, callback) ->
     callback null
 
 # Deploys to beta any apps which have been deployed to dev over the last <days>
-deployToBeta = (res, userInfo, days) ->
+deployToBeta = (res, userInfo, days, endMessage) ->
   # We don't want to deploy any apps before endTime (e.g. if days = 1 we only look 1 day back).
   endTime = moment().subtract(days, 'days')
   # Get the list of builds, passed to the callback
@@ -105,7 +109,6 @@ deployToBeta = (res, userInfo, days) ->
     getDevDeploys res, endTime, builds, 0, {}, (info) ->
       if info?
         # We've got the info for an app which should be deployed to beta.
-        res.reply "Deploying #{info.ARTIFACT_ID} to beta (Version #{info.VERSION})"
         options =
           token: 'deploy'
           json:
@@ -117,6 +120,10 @@ deployToBeta = (res, userInfo, days) ->
             ]
         url = "https://#{userInfo.user}:#{userInfo.token}@geodev.edina.ac.uk/jenkins/job/dm-deploy/build"
         executeJob url, options, res, 'deploy'
+      else
+        setTimeout ->
+          res.reply endMessage
+        , 200
 
 
 getParams = (args, res, callback) ->
@@ -450,5 +457,40 @@ module.exports = (robot) ->
     userInfo = getValidUser res
     if userInfo?
       res.reply "Deploying apps to beta, looking back #{days} days"
-      deployToBeta res, userInfo, days
+      deployToBeta res, userInfo, days, "All apps deployed to beta"
 
+  betaCronJob = null
+
+  robot.respond /dmci start update ([0-9]+) (.*)$/, (res) ->
+    days = res.match[1]
+    cronLine = res.match[2]
+    userInfo = getValidUser res
+    if userInfo?
+      if betaCronJob?
+        res.reply "Error: a regular deploy to beta job already exists"
+      else
+        try
+          res.reply "Starting regular deploys to beta, looking back #{days} days with cron line '#{cronLine}'"
+          cronJob = new CronJob cronLine, () ->
+            res.reply "Auto deploying apps to beta, looking back #{days} days"
+            deployToBeta res, userInfo, days, "All apps deployed to beta"
+          , null, true, 'Europe/London'
+          betaCronJob = { 'days': days, 'cronLine': cronLine, 'cronJob': cronJob }
+          cronJob.start()
+        catch ex
+          res.reply "Problem creating the cron job: is your cron line (#{cronLine}) valid?"
+
+  robot.respond /dmci stop update/, (res) ->
+    if (getValidUser res)?
+      if betaCronJob?
+        betaCronJob.cronJob.stop()
+        betaCronJob = null
+      else
+        res.reply "Error: no regular deploy to beta created"
+
+  robot.respond /dmci show update/, (res) ->
+    if (getValidUser res)?
+      if betaCronJob?
+        res.reply "Regular deploy to beta looking back #{betaCronJob.days} days with cron line #{betaCronJob.cronLine}"
+      else
+        res.reply "No regular deploy to beta exists"
