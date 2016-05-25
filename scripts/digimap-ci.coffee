@@ -444,9 +444,8 @@ module.exports = (robot) ->
           url = "https://#{user}:#{token.token}@geodev.edina.ac.uk/jenkins/job/dm-maven-release/m2release/submit"
 
           executeJob url, options, res, 'release'
-          params.releaseVersion = metadata.latestVersion.replace /-SNAPSHOT/, ''
 
-          msg = "Releasing #{params.artifactId} v#{params.releaseVersion}"
+          msg = "Releasing #{params.artifactId} v#{releaseVersion}"
           res.reply msg
           return
 
