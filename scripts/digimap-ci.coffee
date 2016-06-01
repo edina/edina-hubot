@@ -148,19 +148,20 @@ getParams = (args, res, callback) ->
     msg = 'Error: The app requested doesn\'t match any known'
     res.reply msg
   else
+    console.log "Site has been supplied"
     # Has site been supplied? i.e. DEV|BETA|KB|AT
     # I not ddefault to beta.
     # Check this before version since this has a limited number of options.
     # First check the second supplied parmeter.
     site = null
     isParamSite = false
-    if params[1] in sites
-      site = params[1]
+    if params[1].toUpperCase() in sites
+      site = params[1].toUpperCase()
       isParamSite = true
 
     if site == null
-      if params[2] in sites
-        site = params[2]
+      if params[2].toUpperCase() in sites
+        site = params[2].toUpperCase()
       else
         site = 'BETA'
 
@@ -252,7 +253,7 @@ getDeployParams = (params, metadata) ->
 executeJob = (url, params, res, job) ->
   #console.log "URL: #{url}"
   paramsString = JSON.stringify params
-  #console.log "PARAMS: #{paramsString}"
+  console.log "PARAMS: #{paramsString}"
   token = params.token
   #console.log "TOKEN: #{token}"
   json = params.json
@@ -342,6 +343,7 @@ module.exports = (robot) ->
       return
     else
       getParams args, res, (params) ->
+        console.log "Gotten Params: #{params.site}"
         options =
           token: 'deploy'
           json:
@@ -369,6 +371,7 @@ module.exports = (robot) ->
         # maven metadata.
         if params.version?
           # Request Jenkins job run.
+          console.log "Job Params: #{params.site}"
           executeJob url, options, res, 'deploy'
           # depParams = JSON.stringify params, null, 2
           # console.log "PARAM: #{depParams}"
@@ -384,6 +387,7 @@ module.exports = (robot) ->
                 param.value = metadata.latestVersion
 
             # Request Jenkins job run.
+            console.log "Job Params from metadata: #{params.site}"
             executeJob url, options, res, 'deploy'
             # depParams = JSON.stringify params, null, 2
             # console.log "PARAMS: #{depParams}"
