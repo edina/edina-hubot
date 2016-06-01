@@ -30,7 +30,7 @@ apps =
   frontend:
     location: 'edina/digimap/'
     groupId: 'edina.digimap'
-    apps: ['cdptquery', 'codepoint', 'datadownload', 'digiadmin', 'gaz-plus', 'gaz-simple', 'interface', 'mapproxy', 'marinelexicon', 'roam', 'siterep']
+    apps: ['cdptquery', 'codepoint', 'datadownload', 'digiadmin', 'gaz-plus', 'gaz-simple', 'interface', 'mapproxy', 'marinelexicon', 'roam', 'siterep', 'interface2']
 
 # Small helper function to get group ID for an app.
 getGroupId = (app) ->
