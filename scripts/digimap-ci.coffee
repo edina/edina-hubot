@@ -149,28 +149,23 @@ getParams = (args, res, callback) ->
     res.reply msg
   else
     console.log "Site has been supplied"
-    # Has site been supplied? i.e. DEV|BETA|KB|AT
-    # I not ddefault to beta.
-    # Check this before version since this has a limited number of options.
-    # First check the second supplied parmeter.
-    site = null
-    isParamSite = false
-    if params[1].toUpperCase() in sites
+
+    # The default site (environment) is beta.
+    site = 'BETA'
+
+    if params[1] && params[1].toUpperCase() in sites
+      # When second parameter is the 'site' then take third parameter
+      # as the version if it's available
       site = params[1].toUpperCase()
-      isParamSite = true
-
-    if site == null
-      if params[2].toUpperCase() in sites
-        site = params[2].toUpperCase()
-      else
-        site = 'BETA'
-
-    # Has version been supplied?
-    # User's could get params in wrong order e.g. roam DEV 1.1, instead of roam 1.1 DEV
-    # It is possible for version to be undefined, we will check and use latest if so.
-    if isParamSite
-      version = params[2]
-    else
+      if params[2]
+        version = params[2]
+    else if params[2] && params[2].toUpperCase() in sites
+      # When third parameter is the 'site' the second parameter should be
+      # the version
+      site = params[2].toUpperCase()
+      version = params[1]
+    else if params[1] && params.length == 2
+      # Otherwise treat any second parameter as the version
       version = params[1]
 
     options =
