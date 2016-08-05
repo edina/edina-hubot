@@ -204,6 +204,28 @@ getMetadata = (params, res, callback) ->
         res.reply "ERROR Getting Maven Metadata from #{metadataUrl}: #{error}"
         return
 
+isInt = (n) ->
+  /^\d+$/.test(n)
+
+explodeVersionNumber = (version) ->
+  # Convert semantic version to object with major/minor/patch numbers
+  v = version.split /\.|-/
+  return {
+    major: if v[0]? && isInt(v[0]) then parseInt(v[0]) else 0,
+    minor: if v[1]? && isInt(v[1]) then parseInt(v[1]) else 0,
+    patch: if v[2]? && isInt(v[2]) then parseInt(v[2]) else 0,
+    snapshot: /-SNAPSHOT$/.test(version),
+    full:  version
+  }
+
+getHighestVersion = (versions) ->
+  # Extract the highest version number from a list of versions (each a string)
+  cur = { major: 0, minor: 0, patch: 0, full: null }
+  exploded = (explodeVersionNumber v for v in versions)
+  (if ( v.major > cur.major ||
+       (v.major == cur.major && v.minor >  cur.minor) ||
+       (v.major == cur.major && v.minor == cur.minor && v.patch > cur.patch)) then cur = v) for v in exploded.reverse()
+  cur
 
 # Extract metadata from maven-metadata request.
 extractMetadata = (data) ->
@@ -216,15 +238,10 @@ extractMetadata = (data) ->
   lastUpdatedStr = versioning.lastUpdated[0]
   latestDate = moment(lastUpdatedStr, 'YYYYMMDDhhmmss')
 
-  versions.sort (a,b) ->
-    # Not perfect but good enough, release versions come before SNAPSHOT ones
-    # but as I said, that is good enough, what we care about if we have done an
-    # emergency release as that comes after the latest SNAPSHOT, this ensures the
-    # latest SNAPSHOT is last in the array as it's numeric value will be higher
-    # than the emergency release value.
-    return if a >= b then 1 else -1
+  last = getHighestVersion versions
+  console.log "Highest Version: #{last.full}"
 
-  latestVersion: versions[versions.length-1]
+  latestVersion: last.full
 
   # Get latest RELEASE.
   latestRelease: versioning.release[0]
@@ -443,6 +460,7 @@ module.exports = (robot) ->
           url = "https://#{user}:#{token.token}@geodev.edina.ac.uk/jenkins/job/dm-maven-release/m2release/submit"
 
           executeJob url, options, res, 'release'
+          releaseVersion = metadata.latestVersion.replace /-SNAPSHOT/, ''
 
           msg = "Releasing #{params.artifactId} v#{releaseVersion}"
           res.reply msg
