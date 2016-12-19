@@ -30,7 +30,12 @@ apps =
   frontend:
     location: 'edina/digimap/'
     groupId: 'edina.digimap'
-    apps: ['cdptquery', 'codepoint', 'datadownload', 'digiadmin', 'gaz-plus', 'gaz-simple', 'interface', 'mapproxy', 'marinelexicon', 'roam', 'siterep', 'interface2']
+    apps: ['cdptquery', 'codepoint', 'datadownload', 'digiadmin', 'gaz-plus', 'gaz-simple', 'interface', 'mapproxy', 'marinelexicon', 'roam', 'siterep']
+
+libraries =
+  location: 'edina/digimap/'
+  groupId: 'edina.digimap'
+  apps: ['mapper-framework', 'user-persistence', 'authorisation', 'digimap-logging']
 
 # Small helper function to get group ID for an app.
 getGroupId = (app) ->
@@ -126,7 +131,7 @@ deployToBeta = (res, userInfo, days, endMessage) ->
         , 200
 
 
-getParams = (args, res, callback) ->
+getParams = (args, res, allowLibraries, callback) ->
   params = args.split(' ')
 
   app = null
@@ -144,8 +149,19 @@ getParams = (args, res, callback) ->
         groupId = apps.services.groupId
         location = apps.services.location
 
+  # Check also libraries if alowed by the caller
+  if allowLibraries && app == null
+    for element in libraries.apps
+      if element == params[0]
+        app = element
+        groupId = libraries.groupId
+        location = libraries.location
+
   if app == null
-    msg = 'Error: The app requested doesn\'t match any known'
+    if allowLibraries
+      msg = 'Error: The app or library requested doesn\'t match any known'
+    else
+      msg = 'Error: The app requested doesn\'t match any known'
     res.reply msg
   else
     console.log "Site has been supplied"
@@ -334,7 +350,7 @@ getValidUser = (res) ->
     res.reply "Error: User @#{user} is not permitted to release apps"
     return null
   else
-    return { user: user, token: token.token }
+  return { user: user, token: token.token }
 
 
 module.exports = (robot) ->
@@ -354,7 +370,8 @@ module.exports = (robot) ->
       res.reply msg
       return
     else
-      getParams args, res, (params) ->
+      # Get parameters ignoring libraries (cannot deploy a library)
+      getParams args, res, false, (params) ->
         console.log "Gotten Params: #{params.site}"
         options =
           token: 'deploy'
@@ -422,7 +439,8 @@ module.exports = (robot) ->
       res.reply msg
       return
     else
-      getParams args, res, (params) ->
+      # Get the parameters including libraries (a library can be released)
+      getParams args, res, true, (params) ->
         getMetadata params, res, (metadata) ->
           releaseVersion = metadata.latestVersion.replace /-SNAPSHOT/, ''
           index = releaseVersion.indexOf '.'
