@@ -473,7 +473,7 @@ module.exports = (robot) ->
     userInfo = getValidUser res
     if userInfo?
       res.reply "Deploying apps to beta, looking back #{days} days"
-      deployToBeta res, userInfo, days, "All apps deployed to beta"
+      deployToBeta res, userInfo, days, "Update command completed, all job requests sent to Jenkins. Note that Jenkins jobs can fail"
 
   betaCronJob = null
 
@@ -489,7 +489,7 @@ module.exports = (robot) ->
           res.reply "Starting regular deploys to beta, looking back #{days} days with cron line '#{cronLine}'"
           cronJob = new CronJob cronLine, () ->
             res.reply "Auto deploying apps to beta, looking back #{days} days"
-            deployToBeta res, userInfo, days, "All apps deployed to beta"
+            deployToBeta res, userInfo, days, "Regular update completed, all job requests sent to Jenkins. Note that Jenkins jobs can fail"
           , null, true, 'Europe/London'
           betaCronJob = { 'days': days, 'cronLine': cronLine, 'cronJob': cronJob }
           cronJob.start()
