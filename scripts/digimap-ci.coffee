@@ -20,6 +20,11 @@ mavenRepository = process.env.HUBOT_MVN_REPO_URL
 authTokensString = process.env.HUBOT_JENKINS_AUTH_TOKENS
 authTokens = JSON.parse(authTokensString)
 
+# Defaults for the gort start update command. These will run the cron at 10pm
+# every evening, and the update will look back 1 day for new apps to deploy to beta.
+defaultStartUpdateDays = '1'
+defaultStartUpdateCronLine = '0 0 22 0 0 0'
+
 sites = ['DEV', 'BETA', 'KB', 'AT']
 
 apps =
@@ -477,7 +482,7 @@ module.exports = (robot) ->
 
   betaCronJob = null
 
-  robot.respond /dmci start update ([0-9]+) (.*)$/, (res) ->
+  robot.respond /dmci start update\s*([0-9]*)\s*(.*)$/, (res) ->
     days = res.match[1]
     cronLine = res.match[2]
     userInfo = getValidUser res
@@ -486,6 +491,8 @@ module.exports = (robot) ->
         res.reply "Error: a regular deploy to beta job already exists"
       else
         try
+          days = defaultStartUpdateDays if days == ''
+          cronLine = defaultStartUpdateCronLine if cronLine == ''
           res.reply "Starting regular deploys to beta, looking back #{days} days with cron line '#{cronLine}'"
           cronJob = new CronJob cronLine, () ->
             res.reply "Auto deploying apps to beta, looking back #{days} days"
