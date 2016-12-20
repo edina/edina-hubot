@@ -499,6 +499,7 @@ module.exports = (robot) ->
   robot.respond /dmci stop update/, (res) ->
     if (getValidUser res)?
       if betaCronJob?
+        res.reply "Stopping regular deploy to beta which looked back #{betaCronJob.days} days with cron line #{betaCronJob.cronLine}"
         betaCronJob.cronJob.stop()
         betaCronJob = null
       else
