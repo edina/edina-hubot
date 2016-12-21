@@ -350,7 +350,7 @@ getValidUser = (res) ->
     res.reply "Error: User @#{user} is not permitted to release apps"
     return null
   else
-  return { user: user, token: token.token }
+    return { user: user, token: token.token }
 
 
 module.exports = (robot) ->
