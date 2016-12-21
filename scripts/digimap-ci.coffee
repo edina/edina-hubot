@@ -134,30 +134,22 @@ deployToBeta = (res, userInfo, days, endMessage) ->
 getParams = (args, res, allowLibraries, callback) ->
   params = args.split(' ')
 
-  app = null
-  groupId = null
-  for element in apps.frontend.apps
-    if element == params[0]
-      app = element
-      groupId = apps.frontend.groupId
-      location = apps.frontend.location
+  app = apps.frontend.apps.find (e) -> e == params[0]
+  groupId = apps.frontend.groupId
+  location = apps.frontend.location
 
-  if app == null
-    for element in apps.services.apps
-      if element == params[0]
-        app = element
-        groupId = apps.services.groupId
-        location = apps.services.location
+  if not app?
+    app = apps.services.apps.find (e) -> e == params[0]
+    groupId = apps.services.groupId
+    location = apps.services.location
 
   # Check also libraries if alowed by the caller
-  if allowLibraries && app == null
-    for element in libraries.apps
-      if element == params[0]
-        app = element
-        groupId = libraries.groupId
-        location = libraries.location
+  if allowLibraries and not app?
+    app = libraries.apps.find (e) -> e == params[0]
+    groupId = libraries.groupId
+    location = libraries.location
 
-  if app == null
+  if not app?
     if allowLibraries
       msg = 'Error: The app or library requested doesn\'t match any known'
     else
