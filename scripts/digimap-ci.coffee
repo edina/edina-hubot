@@ -35,7 +35,12 @@ apps =
   frontend:
     location: 'edina/digimap/'
     groupId: 'edina.digimap'
-    apps: ['cdptquery', 'codepoint', 'datadownload', 'digiadmin', 'gaz-plus', 'gaz-simple', 'interface', 'mapproxy', 'marinelexicon', 'roam', 'siterep', 'interface2']
+    apps: ['cdptquery', 'codepoint', 'datadownload', 'digiadmin', 'gaz-plus', 'gaz-simple', 'interface', 'mapproxy', 'marinelexicon', 'roam', 'siterep']
+
+libraries =
+  location: 'edina/digimap/'
+  groupId: 'edina.digimap'
+  apps: ['mapper-framework', 'user-persistence', 'authorisation', 'digimap-logging', 'coordomatic']
 
 # Small helper function to get group ID for an app.
 getGroupId = (app) ->
@@ -131,26 +136,29 @@ deployToBeta = (res, userInfo, days, endMessage) ->
         , 200
 
 
-getParams = (args, res, callback) ->
+getParams = (args, res, allowLibraries, callback) ->
   params = args.split(' ')
 
-  app = null
-  groupId = null
-  for element in apps.frontend.apps
-    if element == params[0]
-      app = element
-      groupId = apps.frontend.groupId
-      location = apps.frontend.location
+  app = apps.frontend.apps.find (e) -> e == params[0]
+  groupId = apps.frontend.groupId
+  location = apps.frontend.location
 
-  if app == null
-    for element in apps.services.apps
-      if element == params[0]
-        app = element
-        groupId = apps.services.groupId
-        location = apps.services.location
+  if not app?
+    app = apps.services.apps.find (e) -> e == params[0]
+    groupId = apps.services.groupId
+    location = apps.services.location
 
-  if app == null
-    msg = 'Error: The app requested doesn\'t match any known'
+  # Check also libraries if alowed by the caller
+  if allowLibraries and not app?
+    app = libraries.apps.find (e) -> e == params[0]
+    groupId = libraries.groupId
+    location = libraries.location
+
+  if not app?
+    if allowLibraries
+      msg = 'Error: The app or library requested doesn\'t match any known'
+    else
+      msg = 'Error: The app requested doesn\'t match any known'
     res.reply msg
   else
     console.log "Site has been supplied"
@@ -359,7 +367,8 @@ module.exports = (robot) ->
       res.reply msg
       return
     else
-      getParams args, res, (params) ->
+      # Get parameters ignoring libraries (cannot deploy a library)
+      getParams args, res, false, (params) ->
         console.log "Gotten Params: #{params.site}"
         options =
           token: 'deploy'
@@ -427,7 +436,8 @@ module.exports = (robot) ->
       res.reply msg
       return
     else
-      getParams args, res, (params) ->
+      # Get the parameters including libraries (a library can be released)
+      getParams args, res, true, (params) ->
         getMetadata params, res, (metadata) ->
           releaseVersion = metadata.latestVersion.replace /-SNAPSHOT/, ''
           index = releaseVersion.indexOf '.'
