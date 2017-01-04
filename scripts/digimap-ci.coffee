@@ -23,7 +23,7 @@ authTokens = JSON.parse(authTokensString)
 # Defaults for the gort start update command. These will run the cron at 10pm
 # every evening, and the update will look back 1 day for new apps to deploy to beta.
 defaultStartUpdateDays = '1'
-defaultStartUpdateCronLine = '0 0 22 0 0 0'
+defaultStartUpdateCronLine = '0 0 22 * * *'
 
 sites = ['DEV', 'BETA', 'KB', 'AT']
 
