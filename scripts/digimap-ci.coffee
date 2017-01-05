@@ -6,9 +6,9 @@
 #   hubot: dmci deploy <app> <version> <site> - Deploy an  app (defaults: version=latest, site=beta).
 #   hubot: dmci release <app> - Tell Jenkins what to run the Maven Release Plugin for <app>.
 #   hubot: dmci update <days> - Update beta with apps deployed in last <days> (default 1 day).
-#   hubot: dmci start update <days> <cron> - Deploy to beta, apps deployed <days> ago using cron syntax
-#   hubot: dmci stop update - Stop any regular deploys to beta, if one has been set
-#   hubot: dmci show update - Display information on a regular update to beta, if one has been set
+#   hubot: dmci update start <days> <cron> - Deploy to beta, apps deployed <days> ago using cron syntax
+#   hubot: dmci update stop - Stop any regular deploys to beta, if one has been set
+#   hubot: dmci update show - Display information on a regular update to beta, if one has been set
 
 xml2js = require('xml2js')
 xmlParser = new xml2js.Parser()
@@ -481,9 +481,10 @@ module.exports = (robot) ->
           res.reply msg
           return
 
-  robot.respond /dmci update(.*)$/, (res) ->
-    days = parseInt (res.match[1].replace /^\s+|\s+$/g, '')
-    if isNaN(days)
+  robot.respond /dmci update ?(\d+)?$/, (res) ->
+    if res.match[1]?
+      days = parseInt res.match[1]
+    else
       days = 1
     userInfo = getValidUser res
     if userInfo?
@@ -492,7 +493,7 @@ module.exports = (robot) ->
 
   betaCronJob = null
 
-  robot.respond /dmci start update\s*([0-9]*)\s*(.*)$/, (res) ->
+  robot.respond /dmci update start\s*([0-9]*)\s*(.*)$/, (res) ->
     days = res.match[1]
     cronLine = res.match[2]
     userInfo = getValidUser res
@@ -513,7 +514,7 @@ module.exports = (robot) ->
         catch ex
           res.reply "Problem creating the cron job: is your cron line (#{cronLine}) valid?"
 
-  robot.respond /dmci stop update/, (res) ->
+  robot.respond /dmci update stop/, (res) ->
     if (getValidUser res)?
       if betaCronJob?
         res.reply "Stopping regular deploy to beta which looked back #{betaCronJob.days} days with cron line #{betaCronJob.cronLine}"
@@ -522,7 +523,7 @@ module.exports = (robot) ->
       else
         res.reply "Error: no regular deploy to beta created"
 
-  robot.respond /dmci show update/, (res) ->
+  robot.respond /dmci update show/, (res) ->
     if (getValidUser res)?
       if betaCronJob?
         res.reply "Regular deploy to beta looking back #{betaCronJob.days} days with cron line #{betaCronJob.cronLine}"
