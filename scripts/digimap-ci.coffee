@@ -401,7 +401,7 @@ module.exports = (robot) ->
           executeJob url, options, res, 'deploy'
           # depParams = JSON.stringify params, null, 2
           # console.log "PARAM: #{depParams}"
-          msg = "Deploying #{params.artifactId} v#{params.version} to #{params.site}"
+          msg = "Starting deploy of #{params.artifactId} v#{params.version} to #{params.site}"
           res.reply msg
           return
         else
@@ -417,7 +417,7 @@ module.exports = (robot) ->
             executeJob url, options, res, 'deploy'
             # depParams = JSON.stringify params, null, 2
             # console.log "PARAMS: #{depParams}"
-            msg = "Deploying #{params.artifactId} v#{version} to #{params.site}"
+            msg = "Starting deploy of #{params.artifactId} v#{version} to #{params.site}"
             res.reply msg
             return
 
@@ -477,7 +477,7 @@ module.exports = (robot) ->
           executeJob url, options, res, 'release'
           releaseVersion = metadata.latestVersion.replace /-SNAPSHOT/, ''
 
-          msg = "Releasing #{params.artifactId} v#{releaseVersion}"
+          msg = "Starting release of #{params.artifactId} v#{releaseVersion}"
           res.reply msg
           return
 
