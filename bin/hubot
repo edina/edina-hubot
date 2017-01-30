@@ -2,6 +2,10 @@
 
 set -e
 
+# The .bashrc file should ensure ndenv (or similar) is in the path and
+# npm and node are available.
+source ~/.bashrc
+
 npm install
 export PATH="node_modules/.bin:node_modules/hubot/node_modules/.bin:$PATH"
 
