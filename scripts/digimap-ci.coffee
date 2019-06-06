@@ -40,7 +40,7 @@ apps =
 libraries =
   location: 'edina/digimap/'
   groupId: 'edina.digimap'
-  apps: ['mapper-framework', 'user-persistence', 'authorisation', 'digimap-logging', 'coordomatic']
+  apps: ['mapper-framework', 'user-persistence', 'authorisation', 'digimap-logging', 'coordomatic', 'digimap-utils']
 
 # Small helper function to get group ID for an app.
 getGroupId = (app) ->
